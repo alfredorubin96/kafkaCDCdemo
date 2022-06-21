@@ -130,3 +130,9 @@ dmypy.json
 
 # DS_Store
 .DS_Store
+
+# Examples got from Nicolas
+/examples/
+
+#DebeziumConfig folder (already inside the configDeebziumConnector.sh)
+/debeziumConfig/

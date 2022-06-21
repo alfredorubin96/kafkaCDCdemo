@@ -1,0 +1,21 @@
+== Kafka CDC hands-on
+
+0) define the stack and explain it
+
+1) start from the relational model (just using customer and order)
+
+2) create the database (define the debezium user, load the data)
+
+3) connect mysql <--> neo4j using kafkaconnect (debezium/neo4jConnect)
+
+4) Load the snapshot inside neo4j (op type r)
+
+5) test the CDC (update, create, delete)
+
+
+TODO tomorrow:
+
+1) import data inside mysql (new product db)
+
+2)
+

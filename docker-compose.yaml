@@ -1,0 +1,173 @@
+version: '3'
+
+networks:
+  lan:
+
+services:
+
+  # My-SQL Instance
+  my-sql:
+    image: mysql:latest
+    hostname: my-sql
+    container_name: my-sql
+    restart: always
+    networks:
+      - lan
+    environment:
+      MYSQL_ROOT_PASSWORD: 'password'
+      MYSQL_USER: 'mysql'
+      MYSQL_PASSWORD: 'password'
+    expose:
+      - 3306
+    volumes:
+      - $HOME/scripts:/script
+    command: --default-authentication-plugin=mysql_native_password --init-file /script/init-db.sql
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper
+    networks:
+      - lan
+    hostname: zookeeper
+    container_name: zookeeper
+    ports:
+      - "2181:2181"
+    environment:
+      ZOOKEEPER_LOG4J_ROOT_LOGLEVEL: 'WARN'
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+
+  # Single instance kafka-broker
+  broker:
+    image: confluentinc/cp-enterprise-kafka
+    hostname: broker
+    networks:
+      - lan
+    container_name: broker
+    depends_on:
+      - zookeeper
+    ports:
+      - "29092:29092"
+    volumes:
+      - $HOME/tmp/docker/kafka-neo4j-sync/broker/data:/data
+      - $HOME/tmp/docker/kafka-neo4j-sync/broker/logs:/logs
+    environment:
+      KAFKA_LOG4J_ROOT_LOGLEVEL: 'WARN'
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://broker:9092,PLAINTEXT_HOST://localhost:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_LISTENERS: PLAINTEXT://broker:9092,PLAINTEXT_HOST://0.0.0.0:29092
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      CONFLUENT_METRICS_ENABLE: 'false'
+      CONFLUENT_SUPPORT_CUSTOMER_ID: 'anonymous'
+
+  schema_registry:
+    image: confluentinc/cp-schema-registry
+    networks:
+      - lan
+    hostname: schema-registry
+    container_name: schema-registry
+    depends_on:
+      - zookeeper
+      - broker
+    ports:
+      - "8081:8081"
+    environment:
+      SCHEMA_LOG4J_ROOT_LOGLEVEL: 'WARN'
+      SCHEMA_REGISTRY_HOST_NAME: schema-registry
+      SCHEMA_REGISTRY_KAFKASTORE_CONNECTION_URL: 'zookeeper:2181'
+      SCHEMA_REGISTRY_LISTENERS: 'http://0.0.0.0:8081'
+      SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: 'PLAINTEXT://broker:9092'
+
+  # Kafka connect with Debezium to produce messages from MySql
+  debezium:
+    image: debezium/connect:latest
+    container_name: debezium
+    ports:
+     - "8083:8083"
+    networks:
+     - lan
+    depends_on:
+     - broker
+     - my-sql
+     - schema_registry
+    environment:
+      - BOOTSTRAP_SERVERS=broker:9092
+      - GROUP_ID=1
+      - CONFIG_STORAGE_TOPIC=my_connect_configs
+      - OFFSET_STORAGE_TOPIC=my_connect_offsets
+      - STATUS_STORAGE_TOPIC=my_connect_statuses
+      - INTERNAL_KEY_CONVERTER=org.apache.kafka.connect.json.JsonConverter
+      - INTERNAL_VALUE_CONVERTER=org.apache.kafka.connect.json.JsonConverter
+      - KEY_CONVERTER=io.confluent.connect.avro.AvroConverter
+      - VALUE_CONVERTER=io.confluent.connect.avro.AvroConverter
+      - CONNECT_KEY_CONVERTER_SCHEMA_REGISTRY_URL=http://schema-registry:8081
+      - CONNECT_VALUE_CONVERTER_SCHEMA_REGISTRY_URL=http://schema-registry:8081
+
+  # Kafka connect with Neo4j plugin to produce messages that will be stored in our Neo4j Instance
+  connect:
+    image: confluentinc/cp-kafka-connect:latest
+    hostname: connect
+    container_name: connect
+    networks:
+      - lan
+    depends_on:
+    - zookeeper
+    - broker
+    - schema_registry
+    ports:
+    - "8084:8083"
+    volumes:
+    - ./plugins:/tmp/connect-plugins
+    environment:
+      CONNECT_BOOTSTRAP_SERVERS: 'broker:9092'
+      CONNECT_REST_ADVERTISED_HOST_NAME: connect
+      CONNECT_REST_PORT: 8083
+      CONNECT_GROUP_ID: compose-connect-group
+      CONNECT_CONFIG_STORAGE_TOPIC: docker-connect-configs
+      CONNECT_CONFIG_STORAGE_REPLICATION_FACTOR: 1
+      CONNECT_OFFSET_FLUSH_INTERVAL_MS: 10000
+      CONNECT_OFFSET_STORAGE_TOPIC: docker-connect-offsets
+      CONNECT_OFFSET_STORAGE_REPLICATION_FACTOR: 1
+      CONNECT_STATUS_STORAGE_TOPIC: docker-connect-status
+      CONNECT_STATUS_STORAGE_REPLICATION_FACTOR: 1
+      CONNECT_KEY_CONVERTER: org.apache.kafka.connect.storage.StringConverter
+      CONNECT_VALUE_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+      CONNECT_INTERNAL_KEY_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+      CONNECT_INTERNAL_VALUE_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+      CONNECT_KEY_CONVERTER_SCHEMA_REGISTRY_URL: 'http://schema-registry:8081'
+      CONNECT_VALUE_CONVERTER_SCHEMA_REGISTRY_URL: 'http://schema-registry:8081'
+      CONNECT_ZOOKEEPER_CONNECT: 'zookeeper:2181'
+      CONNECT_PLUGIN_PATH: /usr/share/java,/tmp/connect-plugins,/usr/share/confluent-hub-components,
+      CONNECT_LOG4J_LOGGERS: org.apache.zookeeper=DEBUG,org.I0Itec.zkclient=DEBUG,org.reflections=ERROR
+    command:
+      - bash
+      - -c
+      - |
+        confluent-hub install --no-prompt neo4j/kafka-connect-neo4j:1.0.9 && \
+        confluent-hub install --no-prompt confluentinc/kafka-connect-datagen:latest
+        /etc/confluent/docker/run
+
+  # Single Neo4j Instance
+  neo4j:
+    image: neo4j:enterprise
+    hostname: neo4j
+    container_name: neo4j
+    networks:
+      - lan
+    ports:
+    - "7474:7474" #HTTP
+    - "7687:7687" #Bolt
+    - "7473:7473" #HTTPS
+    environment:
+      - NEO4J_AUTH=neo4j/connect
+      - NEO4J_ACCEPT_LICENSE_AGREEMENT=yes
+      - NEO4J_dbms_connector_http_listen__address=:7474
+      - NEO4J_dbms_connector_https_listen__address=:7473
+      - NEO4J_dbms_connector_bolt_listen__address=:7687
+      - NEO4J_dbms_allow__upgrade=true
+      - NEO4JLABS_PLUGINS=["apoc"]
+      - NEO4J_dbms_logs_query_enabled=INFO
+      - NEO4J_dbms_logs_query_parameter__logging__enabled=true
