@@ -1,3 +1,5 @@
+# noinspection SqlNoDataSourceInspectionForFile
+
 # Granting privileges for debezium to connect
 CREATE USER IF NOT EXISTS'debezium'@'%' IDENTIFIED BY 'password';
 GRANT ALL PRIVILEGES ON * . * TO 'debezium'@'%';
@@ -9,9 +11,12 @@ GRANT ALL PRIVILEGES ON demo.* TO 'debezium'@'%';
 
 USE `demo`;
 
-/*Table structure for table `customers` */
+/*Dropping older files */
 
+DROP TABLE IF EXISTS `orders`;
 DROP TABLE IF EXISTS `customers`;
+
+/*Table structure for table `customers` */
 
 CREATE TABLE `customers` (
   `customerNumber` int(11) NOT NULL,
@@ -279,8 +284,6 @@ insert  into `customers`(`customerNumber`,`customerName`,`contactLastName`,`cont
 (496,'Kelly\'s Gift Shop','Snowden','Tony','+64 9 5555500','Arenales 1938 3\'A\'',NULL,'Auckland  ',NULL,NULL,'New Zealand',1612,'110000.00');
 
 /*Table structure for table `orders` */
-
-DROP TABLE IF EXISTS `orders`;
 
 CREATE TABLE `orders` (
   `orderNumber` int(11) NOT NULL,

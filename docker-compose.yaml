@@ -20,7 +20,8 @@ services:
     expose:
       - 3306
     volumes:
-      - $HOME/scripts:/script
+      - # - $HOME/my-data-volume:/var/lib/mysql # To uncomment if you want persistence (in our case we don't)
+      - ./script:/script
     command: --default-authentication-plugin=mysql_native_password --init-file /script/init-db.sql
 
   zookeeper:
