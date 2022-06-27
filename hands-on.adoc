@@ -12,7 +12,6 @@
 
 5) test the CDC (update, create, delete)
 
-
 TODO tomorrow:
 
 1) import data inside mysql (new product db)
