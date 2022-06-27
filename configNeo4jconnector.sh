@@ -5,5 +5,5 @@
 curl -X POST http://localhost:8084/connectors \
   -H 'Content-Type:application/json' \
   -H 'Accept:application/json' \
-  -d @contrib.sink.avro.neo4j.json
+  -d @neo4jConfiguration/contrib.sink.avro.neo4j.json
 
