@@ -1,5 +1,5 @@
 # Sending the connector configuration to Debezium
- curl -i -X PUT -H "Content-Type:application/json" \
+curl -i -X PUT -H "Content-Type:application/json" \
   http://localhost:8083/connectors/source-debezium-orders-00/config \
   -d '{
             "connector.class": "io.debezium.connector.mysql.MySqlConnector",

@@ -1,20 +1,33 @@
-== Kafka CDC hands-on
+== Change Data Capture With Kafka From MySql to Neo4j
 
-0) define the stack and explain it
+This demo will show you how you can create a Change Data Capture (CDC) architecture with Kafka, to migrate the data and its changes from MySql (or a different relational database supported from Debezium) to Neo4j. The stack for this demo is as follows:
 
-1) start from the relational model (just using customer and order)
+. A MySql instance, that will be the start of our event stream;
+. Our first Kafka Connect instance with the Debezium Plugin, that will read the binlog of the database and stream the events that occur in the database;
+. A Kafka instance, to manage the messages created from Debezium;
+. Our second Kafka Connect instance with the Neo4j Plugin, that will stream the messages from Kafka to the Neo4j instance, running, for each specified topic, a certain query to manage the possible types of operation that can occur in the MySql database: _c_ (create), _r_ (read), _u_ (update), _d_ (delete);
+. A Neo4j instance, that will be the end point of our event stream.
 
-2) create the database (define the debezium user, load the data)
+// TODO: understand how we can remove them (the schemaRegistry can be removed by changing the type of format for the message from avro to (String, Json), for the zookeeper i think it's mandatory if you use the official image)
+We will also need, to run Kafka and use the Avro message format, the following instances:
 
-3) connect mysql <--> neo4j using kafkaconnect (debezium/neo4jConnect)
+. A Zookeeper instance
+. A SchemaRegistry instance
 
-4) Load the snapshot inside neo4j (op type r)
+Here an image of the stack:
 
-5) test the CDC (update, create, delete)
+// TODO: Create architecture diagram of the stack with draw.io
 
-TODO tomorrow:
+To start the demo, run from the directory of the project the following command:
+[source,shell]
+----
+docker-compose up -d
+----
+The command will use the _docker-compose.yaml_ file present in the project to create the stack that we will use in the demo, pulling the necessary images and building each Docker container.
 
-1) import data inside mysql (new product db)
+After starting the stack, the following things will happen:
 
-2)
+. The MySql instance will launch the script _script/init-db.sql_, that will create the user _debezium_, with all the privileges necessary to access the binlog, and will create and the database _demo_ with two tables, _customers_ and _orders_.
+. The Kafka Connect instances will search for the Kafka instance defined in their environment inside the _docker-compose.yaml_ file.
 
+//TODO: continue explaining what will happen after the run and explain the other steps: 1) what to do to create the stream (configurations -> check the messages flowing -> try to run all the possible modifications)
