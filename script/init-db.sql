@@ -283,7 +283,8 @@ insert  into `customers`(`customerNumber`,`customerName`,`contactLastName`,`cont
 
 (496,'Kelly\'s Gift Shop','Snowden','Tony','+64 9 5555500','Arenales 1938 3\'A\'',NULL,'Auckland  ',NULL,NULL,'New Zealand',1612,'110000.00');
 
-/*Table structure for table `orders` */
+/*Table structure for table `orders`, with ON DELETE CASCADE, when you will delete a Customer, the DB will handle the drop
+  of its orders.*/
 
 CREATE TABLE `orders` (
   `orderNumber` int(11) NOT NULL,
@@ -295,7 +296,7 @@ CREATE TABLE `orders` (
   `customerNumber` int(11) NOT NULL,
   PRIMARY KEY (`orderNumber`),
   KEY `customerNumber` (`customerNumber`),
-  CONSTRAINT `orders_ibfk_1` FOREIGN KEY (`customerNumber`) REFERENCES `customers` (`customerNumber`)
+  CONSTRAINT `orders_ibfk_1` FOREIGN KEY (`customerNumber`) REFERENCES `customers` (`customerNumber`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 /*Data for the table `orders` */
