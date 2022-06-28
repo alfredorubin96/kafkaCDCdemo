@@ -40,7 +40,7 @@ You can see that we will have seven different containers, one for each service w
 . Define the stream from Kafka to Neo4j, definif the configuration for the Kafka Connect Neo4j Plugin.
 
 
-== Configuration For Debezium Plugin
+== Configuring the Debezium Plugin
 
 Now let's take a loot at the configuration for the Debezium connector for Mysql. This connector will read the MySql binlog and create, for each CRUD operation, an event that will be streamed to Kafka.
 The configuration is a Json file, containing different fields that will define how Debezium will create its messages.
@@ -83,7 +83,7 @@ docker exec -it schema-registry kafka-avro-console-consumer --bootstrap-server b
 
 Here an example of message:
 
-[source, json, indent=0]
+[source, json]
 ----
 {
   "before": null,
@@ -139,5 +139,45 @@ Here an example of message:
 }
 ----
 
-What is useful for us in this message is most of the time defined inside the fields _before_,_after_ and _op_. This last field is really important because is what tells us the type of event that happened in the database (in this case, _op_ is equal to _r_. meaning that the operation is of type read (snapshot of the database)).
+What is useful for us in this message is most of the time defined inside the fields _before_,_after_ and _op_. This last field is really important because is what tells us the type of event that happened in the database (in this case, _op_ is equal to _r_, meaning that the operation is of type read (snapshot of the database)).
 Because the operation is of type _r_, there is nothing inside the _before_ field(a row can't exist before its creation) the data is present only in the _after_ field.
+
+//TODO: too add other types of messages or, at least, explain the difference in terms of format
+
+== Configuring the Kafka Connect Neo4j Plugin
+
+To stream the messages from Kafka to Neo4j, we will use the Kafka Connect instance that has installed the Neo4j Plugin. Like the Debezium Plugin, we need to define a connector that will handle the messages coming from the different topics we have created.
+Let's have a look at the configuration:
+
+[source,json]
+----
+include::kakfaConnectConfigs/configSimpleCypher.sink.avro.neo4j.json[]
+----
+
+This configuration and the Debezium's one share some fields (like the _key/value.converter_), but the main difference between them is the field _neo4j.topic.cypher.<topic_name>_. In this field we can define how the connector has to manage the messages from each topic he's subscribed, giving us the possibility to define, for each topic, different queries.
+
+Keep in mind that, because we are working with messages that come from a database that is not another Neo4j instance, we need to manage the CDC directly with the Cypher queries, because otherwise the Neo4j Plugin could not understand how to manage the events coming from Debezium. Also, the Cypher querying is one of the different sink ingestion strategies present in the Neo4j plugin, for further information take a look https://neo4j.com/labs/kafka/4.0/kafka-connect/#kafka-connect-sink-strategies[here^].
+
+Because we are handling the sink ingestion using the Cypher strategy, we need to manage, for each topic, each type of operation (CRUD). To understand better this concept, here the Cypher query to manage the messages coming from the topic _customers_.
+
+[source,cypher]
+----
+WITH event CALL {
+  WITH event
+  WITH event
+  WHERE event.op IN ["c", "u", "r"]
+  WITH event["after"] AS evData
+  MERGE (c:Customer{customerId:evData.customerNumber
+})
+  ON CREATE  SET c.name = evData.customerName ON
+MATCH SET c.name = evData.customerName
+UNION
+WITH event
+WITH event
+WHERE event.op IN ["d"]
+WITH event["before"] AS evData
+MATCH (c:Customer{customerId:evData.customerNumber})
+WITH c
+OPTIONAL MATCH (c)-[:PLACED_ORDER]->(o)
+DETACH DELETE c, o }
+----
