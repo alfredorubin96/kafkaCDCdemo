@@ -93,13 +93,13 @@ services:
     image: debezium/connect:latest
     container_name: debezium
     ports:
-     - "8083:8083"
+      - "8083:8083"
     networks:
-     - lan
+      - lan
     depends_on:
-     - broker
-     - my-sql
-     - schema_registry
+      - broker
+      - my-sql
+      - schema_registry
     environment:
       - BOOTSTRAP_SERVERS=broker:9092
       - GROUP_ID=1
@@ -121,13 +121,13 @@ services:
     networks:
       - lan
     depends_on:
-    - zookeeper
-    - broker
-    - schema_registry
+      - zookeeper
+      - broker
+      - schema_registry
     ports:
-    - "8084:8083"
+      - "8084:8083"
     volumes:
-    - ./plugins:/tmp/connect-plugins
+      - ./plugins:/tmp/connect-plugins
     environment:
       CONNECT_BOOTSTRAP_SERVERS: 'broker:9092'
       CONNECT_REST_ADVERTISED_HOST_NAME: connect
@@ -165,9 +165,9 @@ services:
     networks:
       - lan
     ports:
-    - "7474:7474" #HTTP
-    - "7687:7687" #Bolt
-    - "7473:7473" #HTTPS
+      - "7474:7474" #HTTP
+      - "7687:7687" #Bolt
+      - "7473:7473" #HTTPS
     environment:
       - NEO4J_AUTH=neo4j/connect
       - NEO4J_ACCEPT_LICENSE_AGREEMENT=yes

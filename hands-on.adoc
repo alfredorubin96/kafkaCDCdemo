@@ -43,4 +43,101 @@ You can see that we will have seven different containers, one for each service w
 == Configuration For Debezium Plugin
 
 Now let's take a loot at the configuration for the Debezium connector for Mysql. This connector will read the MySql binlog and create, for each CRUD operation, an event that will be streamed to Kafka.
-To add the
+The configuration is a Json file, containing different fields that will define how Debezium will create its messages.
+
+[source,json]
+----
+include::kakfaConnectConfigs/debeziumConfig.source.avro.mysql.json[]
+----
+
+Just to understand the core of the configuration, note that:
+
+. You must include in the Debezium config username and password to give the connector access to the database with its user, in this case called _debezium_.
+
+. The _key/value.converter_ fields are mandatory to define what type of messages will be streamed from Debezium. In this case we used the Avro format for the messages, including in the configuration the address of the SchemaRegistry service that will keep the schema to decode the messages.
+
+. The _table.whitelist_ field is used to stream events only from the tables we desire, in this case the tables _customers_ and _orders_ inside the database demo.
+
+. The _transform_ fields are used to change the format of the message or to define, like in our case, the topic where the messages will be subscribed.
+
+In this demo, we will have two topics, called _customers_ and _orders_, created by keeping only the name of the MySql table from the topic created from debezium, that is:
+
+----
+database.server.name (mysql_connector) + table.whitelist (demo.customers,ecc...)
+----
+
+So, let's suppose that the message is coming from the table _demo.customers_, the transformation will be:
+
+----
+mysql_connector.demo.customers -> customers
+----
+
+This transformation is not mandatory, depends on what you prefer to have as topic name. There are different possible transformations, for further information look https://debezium.io/documentation/reference/stable/transformations/index.html[here^].
+
+Running the script _configDebeziumConnector.sh_ will create a new connector inside the Debezium instance, that will start to stream messages from the MySql instance as soon as it starts. Let's take a look at the messages created from Debezium. To do this, we need a service that will consume messages from a predefined topic, in this case the _schema-registry_ instance. The following command will consume the first ten messages that are inside the topic _customers_
+
+[source, bash]
+----
+docker exec -it schema-registry kafka-avro-console-consumer --bootstrap-server broker:9092 --topic customers --from-beginning --max-messages 10
+----
+
+Here an example of message:
+
+[source, json, indent=0]
+----
+{
+  "before": null,
+  "after": {
+    "mysql_connector.demo.customers.Value": {
+      "customerNumber": 103,
+      "customerName": "Atelier graphique",
+      "contactLastName": "Schmitt",
+      "contactFirstName": "Carine ",
+      "phone": "40.32.2555",
+      "addressLine1": "54, rue Royale",
+      "addressLine2": null,
+      "city": "Nantes",
+      "state": null,
+      "postalCode": {
+        "string": "44000"
+      },
+      "country": "France",
+      "salesRepEmployeeNumber": {
+        "int": 1370
+      },
+      "creditLimit": {
+        "double": 21000.0
+      }
+    }
+  },
+  "source": {
+    "version": "1.9.3.Final",
+    "connector": "mysql",
+    "name": "mysql_connector",
+    "ts_ms": 1656420989704,
+    "snapshot": {
+      "string": "true"
+    },
+    "db": "demo",
+    "sequence": null,
+    "table": {
+      "string": "customers"
+    },
+    "server_id": 0,
+    "gtid": null,
+    "file": "binlog.000002",
+    "pos": 32307,
+    "row": 0,
+    "thread": null,
+    "query": null
+  },
+  "op": "r",
+  "ts_ms": {
+    "long": 1656420989707
+  },
+  "transaction": null
+}
+----
+
+What is useful for us in this message is most of the time defined inside the fields _before_,_after_ and _op_. This last field is really important because is what tells us the type of event that happened in the database (in this case, _op_ is equal to _r_. meaning that the operation is of type read (snapshot of the database)).
+Because the operation is of type _r_, there is nothing inside the _before_ field(a row can't exist before its creation) the data is present only in the _after_ field.
