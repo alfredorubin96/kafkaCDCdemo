@@ -14,7 +14,7 @@
     "errors.log.enable": true,
     "errors.deadletterqueue.topic.name": "test-error-topic",
     "errors.log.include.messages": true,
-    "errors.deadletterqueue.topic.replication.factor":1,
+    "errors.deadletterqueue.topic.replication.factor": 1,
     "neo4j.server.uri": "bolt://neo4j:7687",
     "neo4j.authentication.basic.username": "neo4j",
     "neo4j.authentication.basic.password": "connect",

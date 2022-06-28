@@ -25,9 +25,22 @@ docker-compose up -d
 ----
 The command will use the _docker-compose.yaml_ file present in the project to create the stack that we will use in the demo, pulling the necessary images and building each Docker container.
 
-After starting the stack, the following things will happen:
+After starting the stack, the MySql instance will launch the script _script/init-db.sql_, that will create the user _debezium_, with all the privileges necessary to access the binlog, and will create and the database _demo_ with two tables, _customers_ and _orders_.
 
-. The MySql instance will launch the script _script/init-db.sql_, that will create the user _debezium_, with all the privileges necessary to access the binlog, and will create and the database _demo_ with two tables, _customers_ and _orders_.
-. The Kafka Connect instances will search for the Kafka instance defined in their environment inside the _docker-compose.yaml_ file.
+After around a minute, the stack will be completely up and running, we can check its status:
 
-//TODO: continue explaining what will happen after the run and explain the other steps: 1) what to do to create the stream (configurations -> check the messages flowing -> try to run all the possible modifications)
+[source,shell]
+----
+docker ps
+----
+
+You can see that we will have seven different containers, one for each service we defined in our _docker-compose_ file. After around a minute, the Kafka Connect services will have found their broker (the Kafka instance) and will be ready to receive in input the necessary configurations to:
+
+. Define the stream from MySql to Kafka, defining the configuration for Debezium Plugin
+. Define the stream from Kafka to Neo4j, definif the configuration for the Kafka Connect Neo4j Plugin.
+
+
+== Configuration For Debezium Plugin
+
+Now let's take a loot at the configuration for the Debezium connector for Mysql. This connector will read the MySql binlog and create, for each CRUD operation, an event that will be streamed to Kafka.
+To add the
