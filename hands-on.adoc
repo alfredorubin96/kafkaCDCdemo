@@ -167,17 +167,34 @@ WITH event CALL {
   WITH event
   WHERE event.op IN ["c", "u", "r"]
   WITH event["after"] AS evData
-  MERGE (c:Customer{customerId:evData.customerNumber
-})
-  ON CREATE  SET c.name = evData.customerName ON
-MATCH SET c.name = evData.customerName
-UNION
-WITH event
-WITH event
-WHERE event.op IN ["d"]
-WITH event["before"] AS evData
-MATCH (c:Customer{customerId:evData.customerNumber})
-WITH c
-OPTIONAL MATCH (c)-[:PLACED_ORDER]->(o)
-DETACH DELETE c, o }
+  MERGE (c:Customer{customerId:evData.customerNumber})
+  ON CREATE SET c.name = evData.customerName ON
+  MATCH SET c.name = evData.customerName
+  UNION
+  WITH event
+  WITH event
+  WHERE event.op IN ["d"]
+  WITH event["before"] AS evData
+  MATCH (c:Customer{customerId:evData.customerNumber})
+  WITH c
+  OPTIONAL MATCH (c)-[:PLACED_ORDER]->(o)
+  DETACH DELETE c, o }
 ----
+
+== Example of creation
+
+We can now create some events inside our MySql database to see if our Cypher query can handle it. Suppose we create a new row in the table _customer_.
+
+First, we need to connect to MySql CLI, specifying in the command the authentication parameters (in this case we will use the _debezium_ user) and the desired database (in our case _demo_):
+[source,bash]
+----
+docker exec -it my-sql mysql -u debezium -ppassword -A demo
+----
+
+After running the command
+[source,sql]
+----
+INSERT INTO `customers`(`customerNumber`,`customerName`,`contactLastName`,`contactFirstName`,`phone`,`addressLine1`,`addressLine2`,`city`,`state`,`postalCode`,`country`,`salesRepEmployeeNumber`,`creditLimit`) VALUES
+(103,'Atelier graphique','Schmitt','Carine ','40.32.2555','54, rue Royale',NULL,'Nantes',NULL,'44000','France',1370,'21000.00');
+----
+

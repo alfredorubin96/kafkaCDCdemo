@@ -178,3 +178,28 @@ services:
       - NEO4JLABS_PLUGINS=["apoc"]
       - NEO4J_dbms_logs_query_enabled=INFO
       - NEO4J_dbms_logs_query_parameter__logging__enabled=true
+
+
+  control-center:
+    image: confluentinc/cp-enterprise-control-center
+    networks:
+      - lan
+    hostname: control-center
+    container_name: control-center
+    depends_on:
+      - zookeeper
+      - broker
+      - schema_registry
+      - connect
+    ports:
+      - "9021:9021"
+    environment:
+      CONTROL_CENTER_LOG4J_ROOT_LOGLEVEL: 'WARN'
+      CONTROL_CENTER_BOOTSTRAP_SERVERS: 'broker:9092'
+      CONTROL_CENTER_ZOOKEEPER_CONNECT: 'zookeeper:2181'
+      CONTROL_CENTER_CONNECT_CLUSTER: 'connect:8083'
+      CONTROL_CENTER_REPLICATION_FACTOR: 1
+      CONTROL_CENTER_INTERNAL_TOPICS_PARTITIONS: 1
+      CONTROL_CENTER_MONITORING_INTERCEPTOR_TOPIC_PARTITIONS: 1
+      CONFLUENT_METRICS_TOPIC_REPLICATION: 1
+      PORT: 9021
