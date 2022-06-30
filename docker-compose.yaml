@@ -185,6 +185,7 @@ services:
       - NEO4J_dbms_logs_query_parameter__logging__enabled=true
 
   control-center:
+    # Just to take a look at the messages going through Kafka
     image: confluentinc/cp-enterprise-control-center
     networks:
       - lan

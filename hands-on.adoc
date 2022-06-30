@@ -8,16 +8,16 @@ This demo will show you how you can create a Change Data Capture (CDC) architect
 . Our second Kafka Connect instance with the Neo4j Plugin, that will stream the messages from Kafka to the Neo4j instance, running, for each specified topic, a certain query to manage the possible types of operation that can occur in the MySql database: _c_ (create), _r_ (read), _u_ (update), _d_ (delete);
 . A Neo4j instance, that will be the end point of our event stream.
 
-// TODO: understand how we can remove them (the schemaRegistry can be removed by changing the type of format for the message from avro to (String, Json), for the zookeeper i think it's mandatory if you use the official image)
 We will also need, to run Kafka and use the Avro message format, the following instances:
 
 . A Zookeeper instance
 . A SchemaRegistry instance
 
+At the end, we will use a Confluent Control Center container, to have a dashboard where we can look at the messages flowing through Kafka.
+
 Here an image of the stack:
 
-// TODO: Create architecture diagram of the stack with draw.io
-
+// TODO: Create an architecture diagram with draw.io
 To start the demo, run from the directory of the project the following command:
 [source,shell]
 ----
@@ -34,11 +34,16 @@ After around a minute, the stack will be completely up and running, we can check
 docker ps
 ----
 
-You can see that we will have seven different containers, one for each service we defined in our _docker-compose_ file. After around a minute, the Kafka Connect services will have found their broker (the Kafka instance) and will be ready to receive in input the necessary configurations to:
+You can see that we will have eight different containers, one for each service we defined in our _docker-compose_ file. After around a minute, the Kafka Connect services will have found their broker (the Kafka instance) and will be ready to receive in input the necessary configurations to:
 
 . Define the stream from MySql to Kafka, defining the configuration for Debezium Plugin
-. Define the stream from Kafka to Neo4j, definif the configuration for the Kafka Connect Neo4j Plugin.
+. Define the stream from Kafka to Neo4j, defining the configuration for the Kafka Connect Neo4j Plugin.
 
+Just before starting to configure our connectors, we need to create the constraints of our graph, to prevent nodes duplication during the ingestion. In our case, we have a uniqueness constraint for each entity in our graph (Customer and Order). To create these constraints, we can run the file _createNeo4jConstraint.sh_ inside our project, that will run the _cypher_ file created inside the folder _neo4jConfiguration_, here the snippet of the code:
+
+----
+include::neo4jConfiguration/createConstraint.cypher[]
+----
 
 == Configuring the Debezium Plugin
 
@@ -74,75 +79,19 @@ mysql_connector.demo.customers -> customers
 
 This transformation is not mandatory, depends on what you prefer to have as topic name. There are different possible transformations, for further information look https://debezium.io/documentation/reference/stable/transformations/index.html[here^].
 
-Running the script _configDebeziumConnector.sh_ will create a new connector inside the Debezium instance, that will start to stream messages from the MySql instance as soon as it starts. Let's take a look at the messages created from Debezium. To do this, we need a service that will consume messages from a predefined topic, in this case the _schema-registry_ instance. The following command will consume the first ten messages that are inside the topic _customers_
-
-[source, bash]
-----
-docker exec -it schema-registry kafka-avro-console-consumer --bootstrap-server broker:9092 --topic customers --from-beginning --max-messages 10
-----
+Running the script _configDebeziumConnector.sh_ will create a new connector inside the Debezium instance, that will start to stream messages from the MySql instance as soon as it starts. Let's take a look at the messages created from Debezium by accessing one of the topic created from the connector (_customers_, _orders_) from the Confluent Control Center instance, located at http://localhost:9021.
 
 Here an example of message:
 
 [source, json]
 ----
-{
-  "before": null,
-  "after": {
-    "mysql_connector.demo.customers.Value": {
-      "customerNumber": 103,
-      "customerName": "Atelier graphique",
-      "contactLastName": "Schmitt",
-      "contactFirstName": "Carine ",
-      "phone": "40.32.2555",
-      "addressLine1": "54, rue Royale",
-      "addressLine2": null,
-      "city": "Nantes",
-      "state": null,
-      "postalCode": {
-        "string": "44000"
-      },
-      "country": "France",
-      "salesRepEmployeeNumber": {
-        "int": 1370
-      },
-      "creditLimit": {
-        "double": 21000.0
-      }
-    }
-  },
-  "source": {
-    "version": "1.9.3.Final",
-    "connector": "mysql",
-    "name": "mysql_connector",
-    "ts_ms": 1656420989704,
-    "snapshot": {
-      "string": "true"
-    },
-    "db": "demo",
-    "sequence": null,
-    "table": {
-      "string": "customers"
-    },
-    "server_id": 0,
-    "gtid": null,
-    "file": "binlog.000002",
-    "pos": 32307,
-    "row": 0,
-    "thread": null,
-    "query": null
-  },
-  "op": "r",
-  "ts_ms": {
-    "long": 1656420989707
-  },
-  "transaction": null
-}
+include::messageExample/messageExample.json[]
 ----
 
-What is useful for us in this message is most of the time defined inside the fields _before_,_after_ and _op_. This last field is really important because is what tells us the type of event that happened in the database (in this case, _op_ is equal to _r_, meaning that the operation is of type read (snapshot of the database)).
-Because the operation is of type _r_, there is nothing inside the _before_ field(a row can't exist before its creation) the data is present only in the _after_ field.
+What is useful for us in this message is most of the time defined inside the fields _before_, _after_ and _op_. This last field is really important because is what tells us the type of event that happened in the database (in this case, _op_ is equal to _r_, meaning that the operation is of type read (snapshot of the database)).
+Because the operation is of type _r_, there is nothing inside the _before_ field (a row can't exist before its creation) and the data is present only in the _after_ field. The types of events
+Because the operation is of type _r_, there is nothing inside the _before_ field (a row can't exist before its creation) and the data is present only in the _after_ field.
 
-//TODO: too add other types of messages or, at least, explain the difference in terms of format
 
 == Configuring the Kafka Connect Neo4j Plugin
 
@@ -181,11 +130,14 @@ WITH event CALL {
   DETACH DELETE c, o }
 ----
 
-== Example of creation
+We can see from this query how we handle the different kink of operations, using a UNION clause to work with two different queries: the first one will manage the creation of a Customer node while, the second one, will manage the removal of a Customer Node and all the related Order nodes.
+
+== Example of event handling
 
 We can now create some events inside our MySql database to see if our Cypher query can handle it. Suppose we create a new row in the table _customer_.
 
 First, we need to connect to MySql CLI, specifying in the command the authentication parameters (in this case we will use the _debezium_ user) and the desired database (in our case _demo_):
+
 [source,bash]
 ----
 docker exec -it my-sql mysql -u debezium -ppassword -A demo
@@ -195,7 +147,90 @@ After running the command, we can now create a new row inside the table _custome
 
 [source,sql]
 ----
-INSERT INTO `customers`(`customerNumber`,`customerName`,`contactLastName`,`contactFirstName`,`phone`,`addressLine1`,`addressLine2`,`city`,`state`,`postalCode`,`country`,`salesRepEmployeeNumber`,`creditLimit`) VALUES
+INSERT INTO `customers`(`customerNumber`,`customerName`,`contactLastName`,`contactFirstName`,`phone`,`addressLine1`,`addressLine2`,`city`,`state`,`postalCode`,`country`,`salesRepEmployeeNumber`,`creditLimit`) VALUE
 (500,'foo','bar','uml','40.32.2555','54, rue Royale',NULL,'Nantes',NULL,'44000','France',1370,'21000.00');
 ----
+
+After the creation, Debezium will create a new event of type _c_ and will submit it to the topic _customers_. We can see the message from the Confluent Control Center instance:
+
+.Message saw from the Confluent Control Center
+image::img/customer_create_message.png[Paper]
+
+When the message is published, the Neo4j Kafka Connect plugin will get the message and will inject the data using the Cypher query predefined for the topic that message came from. We can see from our cypher-shell that a new node with label Customer has been created in our graph, with _customerId_ equal to 500 and with name _foo_:
+
+[source,bash]
+----
+neo4j@neo4j> MATCH (c:Customer{customerId:500}) RETURN c;
++--------------------------------------------+
+| c                                          |
++--------------------------------------------+
+| (:Customer {name: "foo", customerId: 500}) |
++--------------------------------------------+
+----
+
+Let's create an order for this customer, to see if the query can handle correctly its creation. Like before, we need to add a new row to a table in the _demo_ database, in this case the table _orders_.
+
+[source,sql]
+----
+INSERT INTO `orders`(`orderNumber`,`orderDate`,`requiredDate`,`shippedDate`,`status`,`comments`,`customerNumber`) VALUE
+(20000,'2003-01-06','2003-01-13','2003-01-10','Created',NULL,500);
+----
+
+Like earlier, we can see (now from Neo4j Browser for clarity), that the query created both the node with label _Order_ and the relationship of type _PLACED_ORDER_, using the foreign key inside the order row to connect the customer to its order.
+
+
+.The customer and it's order
+image::img/order_creation.png[Paper]
+
+The order we just created has status _Created_, but suppose that, at some point, the order is shipped, and we want to change its status to _Shipped_. We can update the order with this query:
+
+[source,sql]
+----
+UPDATE `orders` SET status='Shipped' WHERE orderNumber=20000;
+----
+
+We can see that the node related to the order with _orderNumber=20000_ has now changed status to _Shipped_.
+
+[source,bash]
+----
+neo4j@neo4j> MATCH (o:Order{orderId:20000}) RETURN o;
++----------------------------------------------+
+| o                                            |
++----------------------------------------------+
+| (:Order {orderId: 20000, status: "Shipped"}) |
++----------------------------------------------+
+----
+
+To show the last possible operation, the deletion of a row, lets delete the customer we created earlier:
+
+
+[source,sql]
+----
+DELETE FROM `customers` WHERE customerNumber=500;
+----
+
+We can see that now, inside our graph, the customer and its order are not present, because the connector managed the deletion of the nodes related to the deleted rows.
+
+[source, bash]
+----
+neo4j@neo4j> MATCH (c:Customer{customerId:500}) RETURN c;
++---+
+| c |
++---+
++---+
+
+0 rows
+ready to start consuming query after 2 ms, results consumed after another 1 ms
+neo4j@neo4j> MATCH (o:Order{orderId:20000}) RETURN o;
++---+
+| o |
++---+
++---+
+
+0 rows
+ready to start consuming query after 2 ms, results consumed after another 1 ms
+----
+
+
+
 

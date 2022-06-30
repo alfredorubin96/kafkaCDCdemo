@@ -1,0 +1,52 @@
+{
+  "before": null,
+  "after": {
+    "mysql_connector.demo.customers.Value": {
+      "customerNumber": 103,
+      "customerName": "Atelier graphique",
+      "contactLastName": "Schmitt",
+      "contactFirstName": "Carine ",
+      "phone": "40.32.2555",
+      "addressLine1": "54, rue Royale",
+      "addressLine2": null,
+      "city": "Nantes",
+      "state": null,
+      "postalCode": {
+        "string": "44000"
+      },
+      "country": "France",
+      "salesRepEmployeeNumber": {
+        "int": 1370
+      },
+      "creditLimit": {
+        "double": 21000.0
+      }
+    }
+  },
+  "source": {
+    "version": "1.9.3.Final",
+    "connector": "mysql",
+    "name": "mysql_connector",
+    "ts_ms": 1656420989704,
+    "snapshot": {
+      "string": "true"
+    },
+    "db": "demo",
+    "sequence": null,
+    "table": {
+      "string": "customers"
+    },
+    "server_id": 0,
+    "gtid": null,
+    "file": "binlog.000002",
+    "pos": 32307,
+    "row": 0,
+    "thread": null,
+    "query": null
+  },
+  "op": "r",
+  "ts_ms": {
+    "long": 1656420989707
+  },
+  "transaction": null
+}
