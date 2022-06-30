@@ -191,10 +191,11 @@ First, we need to connect to MySql CLI, specifying in the command the authentica
 docker exec -it my-sql mysql -u debezium -ppassword -A demo
 ----
 
-After running the command
+After running the command, we can now create a new row inside the table _customers_.
+
 [source,sql]
 ----
 INSERT INTO `customers`(`customerNumber`,`customerName`,`contactLastName`,`contactFirstName`,`phone`,`addressLine1`,`addressLine2`,`city`,`state`,`postalCode`,`country`,`salesRepEmployeeNumber`,`creditLimit`) VALUES
-(103,'Atelier graphique','Schmitt','Carine ','40.32.2555','54, rue Royale',NULL,'Nantes',NULL,'44000','France',1370,'21000.00');
+(500,'foo','bar','uml','40.32.2555','54, rue Royale',NULL,'Nantes',NULL,'44000','France',1370,'21000.00');
 ----
 

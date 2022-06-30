@@ -66,8 +66,12 @@ services:
       KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
-      CONFLUENT_METRICS_ENABLE: 'false'
+      CONFLUENT_METRICS_REPORTER_BOOTSTRAP_SERVERS: broker:29092
+      CONFLUENT_METRICS_REPORTER_TOPIC_REPLICAS: 1
+      CONFLUENT_METRICS_ENABLE: 'true'
       CONFLUENT_SUPPORT_CUSTOMER_ID: 'anonymous'
+
+
 
   # Mandatory when using the Avro format for the messages
   schema_registry:
@@ -178,7 +182,6 @@ services:
       - NEO4JLABS_PLUGINS=["apoc"]
       - NEO4J_dbms_logs_query_enabled=INFO
       - NEO4J_dbms_logs_query_parameter__logging__enabled=true
-
 
   control-center:
     image: confluentinc/cp-enterprise-control-center
