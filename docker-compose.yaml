@@ -21,7 +21,7 @@ services:
     expose:
       - 3306
     volumes:
-      # - $HOME/my-data-volume:/var/lib/mysql # To uncomment if you want persistence (in our case we don't)
+      # - ./my-data-volume:/var/lib/mysql # To uncomment if you want persistence (in our case we don't)
       - ./script:/script
     # Specifying a command, we can add to the startup script new fields.
     # In this case, we will run the /script/init-db.sql script to create the user for Debezium and all the data useful
