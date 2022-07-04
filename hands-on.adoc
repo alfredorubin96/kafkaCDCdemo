@@ -15,6 +15,13 @@ We will also need, to run Kafka and use the Avro message format, the following i
 
 To see the messages flowing through Kafka, we will use a Confluent Control Center instance, deployed in the same network of the stack.
 
+Here the relational model in MySql we will use for this demo:
+
+image::img/erModel.png[Paper]
+
+Here the data model we want to have in Neo4j after the ingestion:
+
+image::img/DataModel.png[Paper]
 // TODO: Create an architecture diagram with draw.io
 To start the demo, run from the directory of the project the following command:
 [source,shell]
@@ -47,10 +54,9 @@ include::neo4jConfiguration/createConstraint.cypher[]
 == Configuring the Debezium Plugin
 
 Now let's take a loot at the configuration for the Debezium connector for Mysql, called _debezium_ in our stack. This connector will read the MySql binlog file and create, for each CRUD operation, an event that will be streamed to Kafka. The configuration is a Json file, containing different fields that will define how Debezium will create its messages.
-
 [source,json]
 ----
-include::kakfaConnectConfigs/debeziumConfig.source.avro.mysql.json[]
+include::kakfaConnectConfigs/debeziumConfig.json[]
 ----
 
 Just to understand the core of the configuration, note that:
@@ -96,7 +102,7 @@ Let's have a look at the configuration:
 
 [source,json]
 ----
-include::kakfaConnectConfigs/configSimpleCypher.sink.avro.neo4j.json[]
+include::kakfaConnectConfigs/neo4jConnectConfig.json[]
 ----
 
 This configuration and the Debezium's one share some fields (like the _key/value.converter_), but the main difference between them are the fields with prefix _neo4j_, especially the field _neo4j.topic.cypher.<topic_name>_. In this field we can define how the connector will manage the messages coming from each topic he's subscribed, giving us the freedom to define, for each topic, different queries.
