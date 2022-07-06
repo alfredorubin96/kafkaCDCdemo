@@ -1,6 +1,8 @@
 version: '3'
 
 # All the containers will be placed in the same network
+# This docker-compose can be used on every system except for systems that use Apple M1/M2 or any ARM CPU.
+# If you find any images that will work for ARM, contact at : alfredo.rubin@neo4j.com.
 networks:
   lan:
 
@@ -18,8 +20,8 @@ services:
       MYSQL_ROOT_PASSWORD: 'password'
       MYSQL_USER: 'mysql'
       MYSQL_PASSWORD: 'password'
-    expose:
-      - 3306
+    ports:
+      - "3306:3306"
     volumes:
       # - ./my-data-volume:/var/lib/mysql # To uncomment if you want persistence (in our case we don't)
       - ./script:/script

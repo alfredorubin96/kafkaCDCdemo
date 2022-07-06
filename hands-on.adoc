@@ -53,7 +53,7 @@ include::neo4jConfiguration/createConstraint.cypher[]
 
 == Configuring the Debezium Plugin
 
-Now let's take a loot at the configuration for the Debezium connector for Mysql, called _debezium_ in our stack. This connector will read the MySql binlog file and create, for each CRUD operation, an event that will be streamed to Kafka. The configuration is a Json file, containing different fields that will define how Debezium will create its messages.
+Now let's take a look at the configuration for the Debezium connector for Mysql, called _debezium_ in our stack. This connector will read the MySql binlog file and create, for each CRUD operation, an event that will be streamed to Kafka. The configuration is a Json file, containing different fields that will define how Debezium will create its messages.
 [source,json]
 ----
 include::kakfaConnectConfigs/debeziumConfig.json[]
@@ -207,7 +207,7 @@ neo4j@neo4j> MATCH (o:Order{orderId:20000}) RETURN o;
 +----------------------------------------------+
 ----
 
-To show the last possible operation, the deletion of a row, lets delete the customer we created earlier:
+To show the last possible operation, the deletion of a row, let's delete the customer we created earlier:
 
 [source,sql]
 ----
