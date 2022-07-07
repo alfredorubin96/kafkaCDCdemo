@@ -22,13 +22,22 @@ image::img/erModel.png[Paper]
 Here the data model we want to have in Neo4j after the ingestion:
 
 image::img/DataModel.png[Paper]
-// TODO: Create an architecture diagram with draw.io
+
+Here a simplified container diagram (based on https://c4model.com[C4 Model^]) to have a high level understanding of how the main components of our stack are interacting with each other. The other containers are not mandatory to have a working CDC system so they are not included in this diagram.
+
+== Starting the project
+
 To start the demo, run from the directory of the project the following command:
+
+image::img/Kafka Demo Container Diagram.drawio.png[Paper]
+
 [source,shell]
 ----
-docker-compose up -d
+docker compose up -d
 ----
+
 The command will use the _docker-compose.yaml_ file inside the project to create the stack that we will use in the demo, pulling the necessary images and building each Docker container.
+
 
 After starting the stack, the MySql instance will launch the script _init-db.sql_ (mounted through a volume inside MySql), that will create the user _debezium_, with all the privileges necessary to access the binlog, and will create and the database _demo_ with two tables, _customers_ and _orders_.
 
@@ -39,7 +48,7 @@ After around a minute, the stack will be completely up and running, we can check
 docker ps
 ----
 
-You can see that we will have eight different containers, one for each service we defined in our _docker-compose_ file. After around a minute, the Kafka Connect services will have found their broker (the Kafka instance) and will be ready to receive in input the necessary configurations to:
+You can see that we will have eight different containers, one for each service we defined in our _docker compose_ file. After around a minute, the Kafka Connect services will have found their broker (the Kafka instance) and will be ready to receive in input the necessary configurations to:
 
 . Define the stream from MySql to Kafka, defining the configuration for Debezium Plugin
 . Define the stream from Kafka to Neo4j, defining the configuration for the Kafka Connect Neo4j Plugin.
