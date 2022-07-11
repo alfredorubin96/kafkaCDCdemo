@@ -57,7 +57,8 @@ Just before starting to configure our connectors, we need to create the constrai
 
 [source, cypher]
 ----
-include::neo4jConfiguration/createConstraint.cypher[]
+CREATE CONSTRAINT IF NOT EXISTS for (c:Customer) require c.customerId IS UNIQUE;
+CREATE CONSTRAINT IF NOT EXISTS for (o:Order) require o.orderId IS UNIQUE;
 ----
 
 == Configuring the Debezium Plugin
