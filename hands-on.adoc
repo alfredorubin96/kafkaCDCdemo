@@ -17,11 +17,11 @@ To see the messages flowing through Kafka, we will use a Confluent Control Cente
 
 Here the relational model in MySql we will use for this demo:
 
-image::img/erModel.png[Paper]
+image::./img/erModel.png[Paper]
 
 Here the data model we want to have in Neo4j after the ingestion:
 
-image::img/DataModel.png[Paper]
+image::./img/DataModel.png[Paper]
 
 Here a simplified container diagram (based on https://c4model.com[C4 Model^]) to have a high level understanding of how the main components of our stack are interacting with each other. The other containers are not mandatory to have a working CDC system so they are not included in this diagram.
 
@@ -29,7 +29,7 @@ Here a simplified container diagram (based on https://c4model.com[C4 Model^]) to
 
 To start the demo, run from the directory of the project the following command:
 
-image::img/Kafka Demo Container Diagram.drawio.png[Paper]
+image::./img/Kafka Demo Container Diagram.drawio.png[Paper]
 
 [source,shell]
 ----
@@ -98,7 +98,7 @@ Here an example of message:
 
 [source, json]
 ----
-include::messageExample/messageExample.json[]
+include::./messageExample/messageExample.json[]
 ----
 
 The information useful for the injection are, most of the time, defined inside the fields _before_, _after_ and _op_. This last field is really important because is what tells us the type of event that happened in the database (in this case, _op_ is equal to _r_, meaning that the operation is of type read (snapshot of the database)).
@@ -111,7 +111,7 @@ Let's have a look at the configuration:
 
 [source,json]
 ----
-include::kakfaConnectConfigs/neo4jConnectConfig.json[]
+include::./kakfaConnectConfigs/neo4jConnectConfig.json[]
 ----
 
 This configuration and the Debezium's one share some fields (like the _key/value.converter_), but the main difference between them are the fields with prefix _neo4j_, especially the field _neo4j.topic.cypher.<topic_name>_. In this field we can define how the connector will manage the messages coming from each topic he's subscribed, giving us the freedom to define, for each topic, different queries.
@@ -163,7 +163,7 @@ INSERT INTO `customers`(`customerNumber`,`customerName`,`contactLastName`,`conta
 After the creation, Debezium will create a new event of type _c_ and will submit it to the topic _customers_. We can see the message from the Confluent Control Center instance:
 
 .Message saw from the Confluent Control Center
-image::img/customer_create_message.png[Paper]
+image::./img/customer_create_message.png[Paper]
 
 When the message is published, the Neo4j Kafka Connect plugin will get the message and will inject the data using the Cypher query predefined for the message's topic. To enter the Neo4j instance in our stack, we can use this command:
 
@@ -195,7 +195,7 @@ INSERT INTO `orders`(`orderNumber`,`orderDate`,`requiredDate`,`shippedDate`,`sta
 Like earlier, we can see (now from http://localhost:7474[Neo4j Browser^] for clarity) that the query created both the node with label _Order_ and the relationship of type _PLACED_ORDER_ with its customer, using the foreign key contained in the message.
 
 .The customer and its order
-image::img/order_creation.png[Paper]
+image::./img/order_creation.png[Paper]
 
 The order we just created has status _Created_, but suppose that, at some point, the order is shipped, and we want to change its status to _Shipped_. We can update the order from MySql with this query:
 
