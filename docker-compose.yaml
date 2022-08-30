@@ -93,7 +93,7 @@ services:
       SCHEMA_REGISTRY_HOST_NAME: schema-registry
       SCHEMA_REGISTRY_KAFKASTORE_CONNECTION_URL: 'zookeeper:2181'
       SCHEMA_REGISTRY_LISTENERS: 'http://0.0.0.0:8081'
-      SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: 'PLAINTEXT://broker:9092'
+      SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: 'PLAINTEXT://broker:29092'
 
   # Kafka connect with Debezium Plugin to produce messages from the MySql binlog
   debezium:
@@ -202,7 +202,7 @@ services:
       - "9021:9021"
     environment:
       CONTROL_CENTER_LOG4J_ROOT_LOGLEVEL: 'WARN'
-      CONTROL_CENTER_BOOTSTRAP_SERVERS: 'broker:9092'
+      CONTROL_CENTER_BOOTSTRAP_SERVERS: 'broker:29092'
       CONTROL_CENTER_ZOOKEEPER_CONNECT: 'zookeeper:2181'
       CONTROL_CENTER_CONNECT_CLUSTER: 'connect:8084'
       CONTROL_CENTER_SCHEMA_REGISTRY_URL: "http://schema-registry:8081"
