@@ -136,3 +136,6 @@ dmypy.json
 
 #DebeziumConfig folder (already inside the configDeebziumConnector.sh)
 /debeziumConfig/
+
+#source demo for now private
+/source_demo/
