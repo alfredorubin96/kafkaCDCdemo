@@ -46,7 +46,7 @@ services:
 
   # Single instance kafka-broker, that will store the messages created from Debezium
   broker:
-    image: confluentinc/cp-enterprise-kafka
+    image: confluentinc/cp-server:7.0.2
     hostname: broker
     networks:
       - lan
