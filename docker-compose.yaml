@@ -159,7 +159,7 @@ services:
       - bash
       - -c
       - |
-        confluent-hub install --no-prompt neo4j/kafka-connect-neo4j:1.0.9 && \
+        confluent-hub install --no-prompt neo4j/kafka-connect-neo4j:2.0.2 && \
         confluent-hub install --no-prompt confluentinc/kafka-connect-datagen:latest
         /etc/confluent/docker/run
 
