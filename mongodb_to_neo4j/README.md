@@ -1,8 +1,9 @@
+# Change Data Capture With Kafka From MongoDB to Neo4j Hands On
+
 REMINDER:
 
-1. Don't know if it will run on Mac M1, i used a large Ubuntu machine on AWS (almost 8Gb RAM).
-2. If you try to change the other nodes (Director, Year, Genre) it won't update the other nodes (for now it can update only the movies because the idea is that we should have a collection per entity, and we miss those collections right now, but it's useful to help people understand that).
-3. The model is coupled with the ObjectId contained inside Mongo (some events contain only the ObjectId to identify their document)
+1If you try to change the other nodes (Director, Year, Genre) it won't update the other nodes (for now it can update only the movies because the idea is that we should have a collection per entity, and we miss those collections right now, but it's useful to help people understand that).
+2The model is coupled with the ObjectId contained inside Mongo (some events contain only the ObjectId to identify their document)
 
 To start the demo, run:
 
