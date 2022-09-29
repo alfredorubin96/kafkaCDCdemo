@@ -138,4 +138,8 @@ dmypy.json
 /debeziumConfig/
 
 #source demo for now private
-/source_demo/
+/demos/soft-delete-demo/
+
+/demos/
+
+*.pem

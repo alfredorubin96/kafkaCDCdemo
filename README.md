@@ -1,5 +1,7 @@
 # Change Data Capture With Kafka Hands On
 
-Welcome to this demo, where you can learn about Change Data Capture With Kafka.
+This repository contains different playgrounds that you can use to test the CDC from a database to a Neo4j database using Kafka and Kafka Connect.
 
-To start, take a look at the [hands-on.adoc](hands-on.adoc) file, that will guide you, from the start of the Docker Compose file up to using the whole application.
+Right now, the repository contains two different demos:
+1. MySql to Neo4j 
+2. MongoDb to Neo4j

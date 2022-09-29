@@ -1,0 +1,24 @@
+{
+  "name": "Neo4jSinkConnector",
+  "config": {
+    "connector.class": "streams.kafka.connect.sink.Neo4jSinkConnector",
+    "kafka.bootstrap.servers": "broker:9092",
+    "topics": "test.movies",
+    "key.converter": "org.apache.kafka.connect.json.JsonConverter",
+    "key.converter.schemas.enable": "false",
+    "value.converter": "org.apache.kafka.connect.json.JsonConverter",
+    "value.converter.schemas.enable": "false",
+    "errors.retry.timeout": "-1",
+    "errors.retry.delay.max.ms": "1000",
+    "errors.tolerance": "all",
+    "errors.log.enable": true,
+    "errors.deadletterqueue.topic.name": "test-error-topic",
+    "errors.log.include.messages": true,
+    "errors.deadletterqueue.topic.replication.factor": 1,
+    "neo4j.server.uri": "bolt://neo4j:7687",
+    "neo4j.authentication.basic.username": "neo4j",
+    "neo4j.authentication.basic.password": "connect",
+    "neo4j.encryption.enabled": false,
+    "neo4j.topic.cypher.test.movies": "WITH event[\"payload\"] AS payload WITH apoc.convert.fromJsonMap(payload) AS pl CALL { WITH pl WITH pl WHERE pl[\"operationType\"] = \"insert\" WITH pl[\"fullDocument\"] AS doc, pl[\"documentKey\"][\"_id\"] AS _id MERGE (m:Movie{mongoId: _id}) SET m.rate=doc[\"rate\"], m.duration=doc[\"duration\"], m.title=doc[\"title\"] MERGE (p:Person{name:doc[\"director\"]}) MERGE (y:Year{year:coalesce(toInteger(doc[\"year\"]),-1)}) MERGE (m)<-[:DIRECTED]-(p) MERGE (m)-[:RELEASED_IN]->(y) WITH doc, m, coalesce(doc[\"genre\"],[]) as genres UNWIND genres as genre MERGE (g:Genre{name:genre}) MERGE (m)-[:HAS_GENRE]->(g) RETURN 1 UNION WITH pl WITH pl WHERE pl[\"operationType\"] = \"delete\" WITH pl[\"documentKey\"][\"_id\"] AS _id MATCH (m:Movie{mongoId:_id}) DETACH DELETE m RETURN 1 UNION WITH pl WITH pl WHERE pl[\"operationType\"] = \"update\" WITH pl[\"updateDescription\"][\"updatedFields\"] as updates, pl[\"documentKey\"][\"_id\"] AS _id MATCH (m:Movie{mongoId:_id}) WITH m, updates CALL { WITH m, updates WITH m, updates UNWIND keys(updates) as updatedField CALL apoc.create.setProperty(m, updatedField, updates[updatedField]) YIELD node RETURN 1} RETURN 1 } RETURN 1"
+  }
+}

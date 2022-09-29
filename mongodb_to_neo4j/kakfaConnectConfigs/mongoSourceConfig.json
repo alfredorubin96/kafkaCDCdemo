@@ -1,0 +1,11 @@
+{
+  "name": "mongoSourceConfig",
+  "config": {
+    "connector.class": "com.mongodb.kafka.connect.MongoSourceConnector",
+    "connection.uri": "mongodb://mongo1",
+    "output.json.formatter":"com.mongodb.kafka.connect.source.json.formatter.SimplifiedJson",
+    "database": "test",
+    "collection": "movies",
+    "copy.existing": "true"
+  }
+}
