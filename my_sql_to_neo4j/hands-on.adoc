@@ -228,8 +228,8 @@ WITH event CALL {
   WHERE event.op IN ["c", "u", "r"]
   WITH event["after"] AS evData
   MERGE (c:Customer{customerId:evData.customerNumber})
-  ON CREATE SET c.name = evData.customerName ON
-  MATCH SET c.name = evData.customerName
+  ON CREATE SET c.name = evData.customerName
+  ON MATCH SET c.name = evData.customerName
   UNION
   WITH event
   WITH event
